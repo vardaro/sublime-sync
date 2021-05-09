@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 )
 
 // Ubuntu path
@@ -13,9 +14,19 @@ var SUBL_SETTING_FILENAMES = [2]string{"Preferences.sublime-settings", "Package 
 func main() {
 	dirPtr := flag.String("subl", UBUNTU_SUBL_PATH, "File directory containing subl setting files.");
 
-	gitPtr := flag.String("git", "", "File directory containing .git");
+	gitPtr := flag.String("git", "", "File directory containing .git.");
 
 
 	fmt.Println(*dirPtr);
-	fmt.Println(*gitPtr)
+	fmt.Println(*gitPtr);
+
+	if *dirPtr == "" {
+		flag.PrintDefaults();
+		os.Exit(1);
+	}
+
+	if *gitPtr == "" {
+		flag.PrintDefaults();
+		os.Exit(1);
+	}
 }
