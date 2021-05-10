@@ -11,7 +11,6 @@ import (
 
 	"github.com/radovskyb/watcher"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 func push(gitp string, commitMsg string) {
@@ -38,11 +37,7 @@ func push(gitp string, commitMsg string) {
 	}
 
 	// git push
-	err = ref.Push(&git.PushOptions{
-		Auth: &http.BasicAuth{
-			Username: 
-		}
-	});
+	err = ref.Push(&git.PushOptions{});
 	if err != nil {
 		fmt.Println(err);
 	}
