@@ -94,18 +94,18 @@ func watch(subl string, gitp string) {
 	w.FilterOps(watcher.Write, watcher.Create);
 
 	go func() {
-		for {
-			select {
-				case event := <-w.Event:
+	  for {
+		  select {
+			  case event := <-w.Event:
 
 					// Name of file in corresponding git repo
-					dst := strings.Replace(event.Path, subl, gitp, 1);
+				  dst := strings.Replace(event.Path, subl, gitp, 1);
 
 					// Update git file
-					err := copy(event.Path, dst);
-					if err != nil {
-						fmt.Println(err);
-					}
+				  err := copy(event.Path, dst);
+				  if err != nil {
+				  	fmt.Println(err);
+				  }
 
 					commitMsg := event.String();
 
