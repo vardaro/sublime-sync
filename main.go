@@ -14,6 +14,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+/**
+	Pushes a file change to Github.
+*/
 func push(gitp string, commitMsg string) {
 	ref, err := git.PlainOpen(gitp);
 	if err != nil {
@@ -37,11 +40,13 @@ func push(gitp string, commitMsg string) {
 		fmt.Println(err);
 	}
 
-	// git push
+	// git push	
 	err = ref.Push(&git.PushOptions{
 		Auth: &http.BasicAuth{
-			Username: 
-		}
+			Username: os.Getenv("GH_USER"),
+			Password: os.Getenv("GH_PASS"),
+		},
+		Progress: os.Stdout,
 	});
 	if err != nil {
 		fmt.Println(err);
