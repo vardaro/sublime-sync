@@ -4,12 +4,58 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"github.com/radovskyb/watcher"
+	"time"
+	"log"
 )
 
-// Ubuntu path
-const UBUNTU_SUBL_PATH string = "~/.config/sublime-text-3/Packages/User"
+/**
+	Watches the subl directory
 
-var SUBL_SETTING_FILENAMES = [2]string{"Preferences.sublime-settings", "Package Control.sublime-settings"}
+	If theres a change, updates the git directory and performs a
+		- add
+		- commit
+		- push
+
+		(if possible)
+*/
+func watch(subl string, git string) {
+	w := watcher.New();
+	w.SetMaxEvents(1);
+	w.FilterOps(watcher.Write, watcher.Create);
+
+	go func() {
+		for {
+			select {
+				case event := <-w.Event:
+					fmt.Println(event);
+
+				case err := <-w.Error:
+					log.Fatalln(err);
+
+				case <-w.Closed:
+					return;
+			}
+		}
+	}()
+
+	// Begin watching subl dir
+	err := w.Add(subl);
+	if err != nil {
+		log.Fatalln(err);
+	}
+
+	for path, f := range w.WatchedFiles() {
+		fmt.Printf("%s: %s\n", path, f.Name())
+	}
+
+	fmt.Println();
+
+	err = w.Start(time.Millisecond * 100);
+	if err != nil {
+		log.Fatalln(err);
+	}	
+}
 
 func main() {
 	dirPtr := flag.String("subl", "", "File directory containing subl setting files. (REQUIRED)");
@@ -18,16 +64,11 @@ func main() {
 
 	flag.Parse();
 
-	fmt.Println(*dirPtr);
-	fmt.Println(*gitPtr);
-
-	if *dirPtr == "" {
+	if *dirPtr == "" || *gitPtr == "" {
+		fmt.Println("Missing required params.");
 		flag.PrintDefaults();
 		os.Exit(1);
 	}
 
-	if *gitPtr == "" {
-		flag.PrintDefaults();
-		os.Exit(1);
-	}
+	watch(*dirPtr, *gitPtr);
 }
