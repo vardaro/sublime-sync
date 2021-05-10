@@ -5,9 +5,67 @@ import (
 	"fmt"
 	"os"
 	"github.com/radovskyb/watcher"
+	"github.com/go-git/go-git/v5"
 	"time"
 	"log"
+	"strings"
+	"io"
 )
+
+func push(gitp string, commitMsg string) {
+	ref, err := git.PlainOpen(gitp);
+	if err != nil {
+		fmt.Println(err);
+	}
+
+	wtree, err := ref.Worktree();
+	if err != nil {
+		fmt.Println(err);
+	}
+
+	// git add . 
+	_, err = wtree.Add(".");
+	if err != nil {
+		fmt.Println(err);
+	}
+
+	// git commit -m commitMsg
+	_, err = wtree.Commit(commitMsg, &git.CommitOptions{});
+	if err != nil {
+		fmt.Println(err);
+	}
+
+	// git push
+	err = ref.Push(&git.PushOptions{});
+	if err != nil {
+		fmt.Println(err);
+	}
+}
+
+/**
+	Given a src path and a copy path,
+	copy the contents of the src file into the copy file.
+*/
+func copy(src string, dst string) error {
+	in, err := os.Open(src);
+	if err != nil {
+		return err;
+	}
+	defer in.Close();
+
+	out, err := os.Create(dst);
+	if err != nil {
+		return err;
+	}
+	defer out.Close();
+
+	_, err = io.Copy(out, in);
+	if err != nil {
+		return err;
+	}
+
+	return out.Close();
+}
 
 /**
 	Watches the subl directory
@@ -19,7 +77,7 @@ import (
 
 		(if possible)
 */
-func watch(subl string, git string) {
+func watch(subl string, gitp string) {
 	w := watcher.New();
 	w.SetMaxEvents(1);
 	w.FilterOps(watcher.Write, watcher.Create);
@@ -28,7 +86,21 @@ func watch(subl string, git string) {
 		for {
 			select {
 				case event := <-w.Event:
-					fmt.Println(event);
+
+					// Name of file in corresponding git repo
+					dst := strings.Replace(event.Path, subl, gitp, 1);
+
+					// Update git file
+					err := copy(event.Path, dst);
+					if err != nil {
+						fmt.Println(err);
+					}
+
+					commitMsg := event.String();
+
+					push(gitp, commitMsg);
+
+					fmt.Println(commitMsg);
 
 				case err := <-w.Error:
 					log.Fatalln(err);
@@ -46,7 +118,7 @@ func watch(subl string, git string) {
 	}
 
 	for path, f := range w.WatchedFiles() {
-		fmt.Printf("%s: %s\n", path, f.Name())
+		fmt.Printf(" Watching %s: %s\n", path, f.Name())
 	}
 
 	fmt.Println();
