@@ -46,7 +46,7 @@ func watch(subl string, git string) {
 	}
 
 	for path, f := range w.WatchedFiles() {
-		fmt.Printf("%s: %s\n", path, f.Name())
+		fmt.Printf(" Watching %s: %s\n", path, f.Name())
 	}
 
 	fmt.Println();
