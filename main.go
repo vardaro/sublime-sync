@@ -4,12 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"github.com/radovskyb/watcher"
+	"time"
+	"log"
 )
-
-// Ubuntu path
-const UBUNTU_SUBL_PATH string = "~/.config/sublime-text-3/Packages/User"
-
-var SUBL_SETTING_FILENAMES = [2]string{"Preferences.sublime-settings", "Package Control.sublime-settings"}
 
 func main() {
 	dirPtr := flag.String("subl", "", "File directory containing subl setting files. (REQUIRED)");
@@ -18,16 +16,46 @@ func main() {
 
 	flag.Parse();
 
-	fmt.Println(*dirPtr);
-	fmt.Println(*gitPtr);
-
-	if *dirPtr == "" {
+	if *dirPtr == "" || *gitPtr == "" {
+		fmt.Println("Missing required params.");
 		flag.PrintDefaults();
 		os.Exit(1);
 	}
 
-	if *gitPtr == "" {
-		flag.PrintDefaults();
-		os.Exit(1);
+	// Create a file watcher for each file that matters.
+	w := watcher.New();
+	w.SetMaxEvents(1);
+	w.FilterOps(watcher.Write, watcher.Create);
+
+	go func() {
+		for {
+			select {
+				case event := <-w.Event:
+					fmt.Println(event);
+
+				case err := <-w.Error:
+					fmt.Println(err);
+
+				case <-w.Closed:
+					return;
+			}
+		}
+	}()
+
+	// Begin watching subl dir
+	err := w.Add(*dirPtr);
+	if err != nil {
+		fmt.Println(err);
+	}
+
+	for path, f := range w.WatchedFiles() {
+		fmt.Printf("%s: %s\n", path, f.Name())
+	}
+
+	fmt.Println();
+
+	err = w.Start(time.Millisecond * 100);
+	if err != nil {
+		log.Fatalln(err);
 	}
 }
