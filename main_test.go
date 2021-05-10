@@ -8,7 +8,7 @@ import (
 
 const (
 	subl = "/home/vardaro/.config/sublime-text-3/Packages/User/"
-	git = "/home/vardaro/projects/sublime_text_settings/"
+	gitp = "/home/vardaro/projects/sublime_text_settings/"
 )
 
 /**
@@ -28,5 +28,5 @@ func init() {
 }
 
 func TestWatch(t *testing.T) {
-	watch(subl, git);
+	watch(subl, gitp);
 }
